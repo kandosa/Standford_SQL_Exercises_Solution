@@ -37,6 +37,7 @@ where Movie.title not in
 
 Q5
 For all pairs of reviewers such that both reviewers gave a rating to the same movie, return the names of both reviewers. Eliminate duplicates, don't pair reviewers with themselves, and include each pair only once. For each pair, return the names in the pair in alphabetical order.
+
 Select distinct rv1.name as reviewer_name1, rv2.name as reviewer_name2
 from Rating as r1, Rating as r2, Reviewer as rv1, Reviewer as rv2
 where r1.rID = rv2.rID
@@ -45,3 +46,90 @@ and r1.mID = r2.mID
 and rv1.name != rv2.name
 and rv1.name < rv2.name
 order by rv1.name
+
+Q6
+For each rating that is the lowest (fewest stars) currently in the database, return the reviewer name, movie title, and number of stars.
+
+select rev.name, title, stars
+from Movie join Rating using(mID)
+join Reviewer as rev using(rID)
+where stars = (select min(stars) from Rating)
+
+Q7
+List movie titles and average ratings, from highest-rated to lowest-rated. If two or more movies have the same average rating, list them in alphabetical order.
+
+select title, avg(stars)
+from Movie join Rating using(mID)
+group by mID
+order by avg(stars) desc, title asc
+
+Q8
+Find the names of all reviewers who have contributed three or more ratings. (As an extra challenge, try writing the query without HAVING or without COUNT.)
+
+select name
+from Reviewer join Rating using(rID)
+group by name
+having count(rID) >= 3
+
+Q9
+Some directors directed more than one movie. For all such directors, return the titles of all movies directed by them, along with the director name. Sort by director name, then movie title. (As an extra challenge, try writing the query both with and without COUNT.)
+
+select title, director
+from Movie
+where director in 
+(
+	select director 
+	from movie
+	group by director
+	having count(director) >1
+)
+order by director, title
+
+Q10
+Find the movie(s) with the highest average rating. Return the movie title(s) and average rating. (Hint: This query is more difficult to write in SQLite than other systems; you might think of it as finding the highest average rating and then choosing the movie(s) with that average rating.)
+
+select title, avg(r.stars)
+from Movie join Rating as r using(mID)
+group by title
+having avg(r.stars) =
+(
+	select max(rt_avg.avgs)
+	from
+	(
+		select mID, avg(stars) as avgs
+		from Rating
+		group by mID
+	) as rt_avg
+)
+
+Q11
+Find the movie(s) with the lowest average rating. Return the movie title(s) and average rating. (Hint: This query may be more difficult to write in SQLite than other systems; you might think of it as finding the lowest average rating and then choosing the movie(s) with that average rating.)
+
+select title, avg(r.stars)
+from Movie join Rating as r using(mID)
+group by title
+having avg(r.stars) =
+(
+	select min(rt_avg.avgs)
+	from
+	(
+		select mID, avg(stars) as avgs
+		from Rating
+		group by mID
+	) as rt_avg
+)
+
+Q12
+For each director, return the director's name together with the title(s) of the movie(s) they directed that received the highest rating among all of their movies, and the value of that rating. Ignore movies whose director is NULL.
+
+select  distinct director, title, stars
+from Movie as m1 join Rating using(mID)
+where director IS NOT NULL
+and stars in
+(
+	select max(stars)
+	from Movie as m2 join Rating using(mID)
+	where director is not NULL
+	and m1.director = m2.director
+)
+
