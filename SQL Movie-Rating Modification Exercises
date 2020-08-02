@@ -1,0 +1,40 @@
+Q1
+Add the reviewer Roger Ebert to your database, with an rID of 209.
+
+insert into Reviewer
+(
+	rID, name
+)
+values
+(
+	209, 'Roger Ebert'
+)
+
+Q2
+For all movies that have an average rating of 4 stars or higher, add 25 to the release year. (Update the existing tuples; don't insert new tuples.)
+
+update Movie
+set year = year +25
+where Movie.mID in
+(
+	select avg_r.mID
+	from
+	(
+		select Movie.mID, avg(Rating.stars)
+		from Movie join Rating using(mID)
+		group by Movie.mID
+		having avg(Rating.stars) >=4
+	)as avg_r
+)
+
+Q3
+delete from Rating
+where Rating.mID in
+(
+	select Movie.mID
+	from Movie
+	where Movie.year < 1970
+	or Movie.year > 2000
+)
+and Rating.stars <4
+	
