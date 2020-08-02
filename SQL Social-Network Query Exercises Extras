@@ -1,0 +1,91 @@
+Q1
+For every situation where student A likes student B, but student B likes a different student C, return the names and grades of A, B, and C.
+
+select h.name, h.grade, hh.name, hh.grade, hhh.name, hhh.grade
+from HighSchooler as h, HighSchooler as hh, HighSchooler as hhh, Likes as l
+where h.ID = l.ID1
+and hh.ID = l.ID2
+and hhh.ID in
+(
+	select Likes.ID2
+	from Likes
+	where Likes.ID1 = hh.id
+)
+and h.ID not in
+(
+	select Likes.ID2
+	from Likes
+	where Likes.ID1 = hh.ID
+)
+
+Q2
+Find those students for whom all of their friends are in different grades from themselves. Return the students' names and grades.
+
+select distinct h.name, h.grade
+from HighSchooler as h, Friend
+where h.grade not in
+(
+	select hh.grade
+	from HighSchooler as hh, Friend
+	where h.ID = Friend.ID1
+	and hh.ID = Friend.ID2
+)
+
+Q3
+What is the average number of friends per student? (Your result should be just one number.)
+
+select avg(avg_F.cnt)
+from
+(
+	select h.ID, count(f.ID2) as cnt
+	from HighSchooler as h, Friend as f
+	where h.ID = f.ID1
+	group by h.ID
+) as avg_F
+
+Q4
+Find the number of students who are either friends with Cassandra or are friends of friends of Cassandra. Do not count Cassandra, even though technically she is a friend of a friend.
+
+select count(distinct f.ID2)
+from Friend as f
+where f.ID1 =
+(
+	select ID
+	from HighSchooler
+	where name = 'Cassandra'
+)
+or f.ID1 in
+(
+	select ff.ID2
+	from Friend as ff
+	where ff.ID1 = 
+	(
+		select ID
+		from HighSchooler
+		where name = 'Cassandra'
+	)
+)
+and f.ID2 != 
+(
+	select ID
+	from HighSchooler
+	where name = 'Cassandra'
+)
+
+Q5
+Find the name and grade of the student(s) with the greatest number of friends.
+
+select h.name, h.grade
+from HighSchooler as h, Friend as f
+where h.ID = f.ID1
+group by h.name, h.grade
+having count(f.ID2) =
+(
+    select max(ftable.f_count)
+    from
+    (
+        select F.id1, count(f.ID2) as f_count
+        from Friend as f
+        group by f.ID1
+    ) as ftable
+)
